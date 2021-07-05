@@ -85,7 +85,18 @@ module Mongoid
         alias_attribute :slugs, :_slugs
 
         # Set index
-        index(*Mongoid::Slug::Index.build_index(slug_scope_key, slug_by_model_type)) unless embedded?
+        unless embedded?
+          case options[:localize]
+          when true
+            index(*Mongoid::Slug::Index.build_index(slug_scope_key, slug_by_model_type, ::I18n.default_locale))
+          when Array
+            options[:localize].each do |locale|
+              index(*Mongoid::Slug::Index.build_index(slug_scope_key, slug_by_model_type, locale))
+            end
+          else
+            index(*Mongoid::Slug::Index.build_index(slug_scope_key, slug_by_model_type))
+          end
+        end
 
         self.slug_url_builder = block_given? ? block : default_slug_url_builder
 
